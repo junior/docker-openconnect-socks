@@ -1,19 +1,21 @@
-FROM ubuntu:16.04
+#
+# Dockerfile for openconnect and dante
+#
 
-MAINTAINER Junejie Ruzol <junejieruzol1@gmail.com>
+FROM alpine:edge
+MAINTAINER kev <noreply@easypi.pro>
 
-RUN apt-get update
-RUN apt-get install -y squid3
-RUN apt-get install -y openconnect
-RUN apt-get install -y ocproxy
-RUN apt-get install -y dnsutils
-RUN apt-get install -y openssh-client
-RUN apt-get install -y iputils-ping
+RUN set -xe \
+    && apk add --no-cache \
+               --repository http://dl-cdn.alpinelinux.org/alpine/edge/testing/ \
+               openconnect dante-server tini\
+    && mkdir -p /etc/openconnect \
+    && touch /etc/openconnect/openconnect.conf
 
-RUN apt-get clean && \
-    rm -rf /var/cache/apt/* && \
-    rm -rf /var/lib/apt/lists/* 
+VOLUME /etc/openconnect
 
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod 0755 /entrypoint.sh
-ENTRYPOINT ["/entrypoint.sh"]
+COPY entrypoint.sh /usr/local/bin
+
+#ENTRYPOINT ["openconnect", "--config=/etc/openconnect/openconnect.conf"]
+#CMD ["--help"]
+ENTRYPOINT ["/sbin/tini", "--", "/usr/local/bin/entrypoint.sh"]
